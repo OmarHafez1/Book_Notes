@@ -1,0 +1,39 @@
+<%- include('partials/header.ejs') %>
+
+  <div class="container-fluid header">
+    <header class="d-flex justify-content-center py-3 header">
+      <ul class="nav nav-pills header">
+        <li class="nav-item"><a href="#" class="nav-link active" aria-current="page">Home</a></li>
+        <li class="nav-item"><a href="#" class="nav-link">Users</a></li>
+      </ul>
+    </header>
+  </div>
+
+  <div class="books">
+    
+    <% books.forEach(book => { %>
+      <div class="book">
+        <% if (book.cover_id == -1) { %>
+          <%- include('partials/no_cover.ejs') %>
+        <% } else {%> 
+          <img src= <%= `https://covers.openlibrary.org/b/id/${book.cover_id}-L.jpg` %> alt="Description of the image" />
+        <% } %>
+          <div class="details">
+          <h1><%= book.title %></h1>
+          <br/>
+          <p>Read date: <span><%= book.read_date %> </span></p>
+          <p>Authors:</p>
+          <ul class="authors">
+            <% book.authors.forEach(author => { %>
+              <li><%= author %></li>
+            <% }) %>
+          </ul>
+          <p>Rating: <span><%= book.rating %>/5</span></p>
+          <p> Note: <span><%= book.note %></span></p>
+        </div>
+      </div>
+    <% }) %>
+  </div>
+
+
+  <%- include('partials/footer.ejs') %>
