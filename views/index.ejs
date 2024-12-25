@@ -10,10 +10,9 @@
   </div>
 
   <div class="books">
-    
     <% books.forEach(book => { %>
       <div class="book">
-        <% if (book.cover_id == -1) { %>
+        <% if (book.cover_id == null || book.cover_id == -1) { %>
           <%- include('partials/no_cover.ejs') %>
         <% } else {%> 
           <img src= <%= `https://covers.openlibrary.org/b/id/${book.cover_id}-L.jpg` %> alt="Description of the image" />
@@ -34,6 +33,5 @@
       </div>
     <% }) %>
   </div>
-
 
   <%- include('partials/footer.ejs') %>
