@@ -79,6 +79,34 @@ app.get("/api/search-books", async (req, res) => {
     console.error(err);
     res.status(500).json({ success: false, error: "Failed to fetch books from API" });
   }
+  // Get Books for a Specific User
+  app.get("/api/user_books", async (req, res) => {
+    const { user_id } = req.query;
+    if (!user_id) return res.status(400).json({ error: "User ID is required" });
+
+    try {
+      const result = await db.query(
+        `SELECT ub.book_key, ub.rating, ub.note, TO_CHAR(ub.read_date, 'DD/MM/YYYY') AS read_date, 
+                b.title, b.cover_id, 
+                ARRAY(SELECT a.name FROM authors a WHERE a.book_key = b.key) AS authors 
+         FROM user_book ub 
+         JOIN books b ON ub.book_key = b.key 
+         WHERE ub.user_id = $1`,
+        [user_id]
+      );
+      res.status(200).json(result.rows);
+
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: "Failed to fetch user books" });
+    }
+  });
+
+  // Start the Server
+  app.listen(port, () => {
+    console.log(`Server running at http://localhost:${port}`);
+  });
+
 });
 
 // Get Book Details
@@ -92,10 +120,10 @@ app.get("/api/book-details/*", async (req, res) => {
 
     const authors = book.authors
       ? await Promise.all(
-          book.authors.map(async (author) => {
-             return (await (await fetch(`${BASE_URL}/${author.author.key}.json`)).json()).key;
-          })
-        )
+        book.authors.map(async (author) => {
+          return (await (await fetch(`${BASE_URL}/${author.author.key}.json`)).json()).key;
+        })
+      )
       : [];
 
     const result = {
@@ -123,7 +151,6 @@ app.post("/api/add-book", async (req, res) => {
     const response = await (await fetch(`${LOCAL_URL}/api/book-details/${book_key}`)).json();
     const { title, authors, cover_id } = response.data;
 
-    // Check if book exists in `books` table
     let bookResult = await db.query("SELECT * FROM books WHERE key = $1", [book_key]);
     if (bookResult.rows.length === 0) {
       await db.query("INSERT INTO books (key, title, cover_id) VALUES ($1, $2, $3)", [
@@ -139,17 +166,20 @@ app.post("/api/add-book", async (req, res) => {
         await Promise.all(authorInsertPromises);
       }
     }
-
-    // Insert into `user_book` table
+        
     await db.query(
-      "INSERT INTO user_book (user_id, book_key, rating, note, read_date) VALUES ($1, $2, $3, $4, $5)",
+      "INSERT INTO user_book (user_id, book_key, rating, note, read_date) VALUES ($1, $2, $3, $4, TO_DATE($5, 'DD/MM/YYYY'))",
       [user_id, book_key, rating, note, read_date]
-    );
+    );    
 
     res.status(201).json({ success: true, message: "Book added successfully" });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ success: false, error: "Failed to add book" });
+    if (err.code === "23505") {
+      res.status(409).json({ success: false, error: "This book has already been added by the user." });
+    } else {
+      console.error(err);
+      res.status(500).json({ success: false, error: "Failed to add book" });
+    }
   }
 });
 
@@ -169,7 +199,7 @@ app.get("/api/user_books", async (req, res) => {
       [user_id]
     );
     res.status(200).json(result.rows);
-    
+
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to fetch user books" });
