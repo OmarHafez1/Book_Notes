@@ -69,3 +69,9 @@ span {
   .no-cover span {
     text-align: center;
   }
+
+.list-group-item.active {
+    background-color: #007bff !important;
+    color: white !important;
+}
+

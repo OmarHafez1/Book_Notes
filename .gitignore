@@ -1,5 +1,1 @@
-# Ignore src folder
-src/
-
-# Ignore .env file
-.env
+.gitignore
