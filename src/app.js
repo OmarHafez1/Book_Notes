@@ -1,7 +1,5 @@
 import express from "express";
 import bodyParser from "body-parser";
-import bookRoutes from "./routes/bookRoutes.js";
-import userRoutes from "./routes/userRoutes.js";
 import { errorHandler } from "./utils/errorHandler.js";
 
 const app = express();

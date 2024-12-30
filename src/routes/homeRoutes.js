@@ -18,8 +18,16 @@ router.get("/", async (req, res) => {
   }
 });
 
-router.get("/users", (req, res) => {
-  res.render("users.ejs");
+router.get("/users", async (req, res) => {
+  try {
+    const usersResponse = await axios.get(`${LOCAL_URL}/user/users-list`);
+    const users = usersResponse.data;
+   
+    res.render("users.ejs", { users });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Failed to fetch users for users page.")
+  }
 });
 
 
