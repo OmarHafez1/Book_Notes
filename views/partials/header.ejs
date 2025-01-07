@@ -1,21 +1,63 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Book Notes</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="/css/style.css">
 </head>
 
 <body>
 
-<div class="container-fluid header">
-  <header class="d-flex justify-content-center py-3 header">
-    <ul class="nav nav-pills header">
-      <li class="nav-item"><a href="/" class="nav-link active" aria-current="page">Home</a></li>
-      <li class="nav-item"><a href="/users" class="nav-link">Users</a></li>
-    </ul>
-  </header>
-</div>
+  <div class="container-fluid header">
+    <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-lg-start">
+      <ul class="nav col-12 col-lg-auto me-lg-auto mb-2 justify-content-center mb-md-0">
+        <li class="nav-item">
+          <a href="/" class="nav-link active">Home</a>
+        </li>
+        <li class="nav-item">
+          <a href="/users" class="nav-link">Users</a>
+        </li>
+        <li class="nav-item">
+          <a href="/book/add-book" class="nav-link">Add Book</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+  
+ <!--  <div class="container-fluid header">
+    <header class="d-flex justify-content-center header">
+      <ul class="nav nav-pills header" id="navbar">
+        <li class="nav-item">
+          <a href="/" class="nav-link active">Home</a>
+        </li>
+        <li class="nav-item">
+          <a href="/users" class="nav-link">Users</a>
+        </li>
+        <li class="nav-item">
+          <a href="/book/add-book" class="nav-link">Add Book</a>
+        </li>
+      </ul>
+    </header>
+  </div> -->
+
+  <script>
+    // Get the current page's URL
+    const currentURL = window.location.pathname;
+
+    // Update active state for navbar items
+    const navLinks = document.querySelectorAll('.nav-link');
+
+    navLinks.forEach(link => {
+      // Check if the link's href matches the current URL
+      if (link.getAttribute('href') === currentURL) {
+        link.classList.add('active');
+      } else {
+        link.classList.remove('active');
+      }
+    });
+  </script>
+

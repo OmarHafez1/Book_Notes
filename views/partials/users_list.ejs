@@ -7,10 +7,9 @@
     </div>
 
     <!-- List of users -->
-    <div class="list-group" id="user-list">
+    <div class="list-group users" id="user-list">
         <% users.forEach((user)=> { %>
-            <a href="#" class="list-group-item d-flex justify-content-between align-items-center"
-                user-id="<%= user.id %>">
+            <a class="list-group-item d-flex justify-content-between align-items-center user" user-id="<%= user.id %>">
                 <%= user.name %>
                     <i class="bi bi-trash text-danger delete-icon" style="cursor: pointer;"></i>
             </a>
@@ -19,107 +18,142 @@
 </div>
 
 <script>
-    let selectedUser = localStorage.getItem('selectedUser'); // Get the stored selected user index
+    document.addEventListener("DOMContentLoaded", () => {
+        let selectedUser = localStorage.getItem('selectedUser'); // Get stored selected user index
+        const userListContainer = document.getElementById('user-list');
 
-    // Highlight the stored selected user on page load
-    const userList = document.querySelectorAll('.list-group-item');
-
-    if (selectedUser !== null && userList[selectedUser]) {
-        userList[selectedUser].classList.add('active');
-    }
-
-    // Handle item selection
-    userList.forEach((item, index) => {
-        item.addEventListener('click', function () {
-            // Remove 'active' from the previously selected item
+        // Highlight the stored selected user
+        const updateSelectedUser = async (index) => {
+            const userList = document.querySelectorAll('.list-group-item');
             if (selectedUser !== null && userList[selectedUser]) {
-                userList[selectedUser].classList.remove('active');
+                userList[selectedUser].classList.remove('selected-user');
+            }
+            selectedUser = index;
+            if (selectedUser !== null) {
+                userList[selectedUser].classList.add('selected-user');
+                localStorage.setItem('selectedUser', selectedUser);
+                let selectedUserId = userList[selectedUser].getAttribute('user-id');
+                localStorage.setItem('selectedUserId', selectedUserId);
+                await fetch(`/user/set-user/${selectedUserId}`, { method: 'POST' });
+            } else {
+                localStorage.removeItem('selectedUser');
+                localStorage.removeItem('selectedUserId');
+                await fetch(`/user/set-user/${-1}`, { method: 'POST' });
+            }
+        };
+        
+        if (selectedUser !== null) {
+            updateSelectedUser(selectedUser);
+        }
+
+        // Event Delegation
+        userListContainer.addEventListener('click', async (e) => {
+            const userList = document.querySelectorAll('.list-group-item');
+            const target = e.target;
+            
+            if (target.classList.contains('delete-icon')) {
+                e.stopPropagation();
+                const item = target.closest('.list-group-item');
+                const userId = item.getAttribute('user-id');
+                
+                try {
+                    const response = await fetch(`/user/delete/${userId}`, { method: 'DELETE' });
+                    const result = await response.json();
+
+                    if (response.ok && result.success) {
+                        item.remove();
+                        if (userList[selectedUser].getAttribute('user-id') === userId) {
+                            updateSelectedUser(selectedUser);
+                        }
+                    } else {
+                        alert(result.error || 'Failed to delete user');
+                    }
+                } catch (error) {
+                    console.error('Error deleting user:', error);
+                    alert('An error occurred while deleting the user.');
+                }
+            } else if (target.classList.contains('list-group-item')) {
+                updateSelectedUser(Array.from(userListContainer.children).indexOf(target));
+            }
+        });
+
+        // Add User
+        document.getElementById('add-user-btn').addEventListener('click', async () => {
+            const userNameInput = document.getElementById('new-user-name');
+            const userName = userNameInput.value.trim();
+            
+            if (!userName) {
+                alert('Please enter a valid name.');
+                return;
             }
 
-            // Mark this as active
-            this.classList.add('active');
-
-            // Update the selected user index
-            selectedUser = index;
-            localStorage.setItem('selectedUser', selectedUser);
-        });
-    });
-
-    // Handle delete functionality
-    userList.forEach((item, index) => {
-        item.querySelector('.delete-icon').addEventListener('click', async function (e) {
-            e.stopPropagation(); // Prevent triggering the click event on the parent item
-
-            const userId = item.getAttribute('user-id'); // Get the user ID from the data attribute
-
-            console.log(userId);
             try {
-                // Send DELETE request to the server
-                const response = await fetch(`/user/delete/${userId}`, {
-                    method: 'DELETE',
+                const response = await fetch('/user/add/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: userName }),
                 });
 
-                const result = await response.json();
-
-                if (response.ok && result.success) {
-                    // Remove the item from the DOM
-                    item.remove();
-
-                    // Update the selected user if necessary
-                    if (index === parseInt(selectedUser)) {
-                        selectedUser = null;
-                        localStorage.removeItem('selectedUser');
-                    } else if (selectedUser !== null && index < selectedUser) {
-                        selectedUser--; // Update the index if a preceding item is removed
-                        localStorage.setItem('selectedUser', selectedUser);
-                    }
+                if (response.ok) {
+                    const newUser = await response.json();
+                    const newUserItem = document.createElement('a');
+                    newUserItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+                    newUserItem.setAttribute('user-id', newUser.user.id);
+                    newUserItem.innerHTML = `${newUser.user.name} <i class="bi bi-trash text-danger delete-icon" style="cursor: pointer;"></i>`;
+                    userListContainer.appendChild(newUserItem);
+                    userNameInput.value = '';
                 } else {
-                    alert(result.error || 'Failed to delete user');
+                    alert('Failed to add user');
                 }
             } catch (error) {
-                console.error('Error deleting user:', error);
-                alert('An error occurred while deleting the user.');
+                console.error('Error adding user:', error);
+                alert('An error occurred while adding the user.');
             }
         });
-    });
 
-    // Handle Add User functionality
-    document.getElementById('add-user-btn').addEventListener('click', async () => {
-        const userNameInput = document.getElementById('new-user-name');
-        const userName = userNameInput.value.trim();
-
-        if (!userName) {
-            alert('Please enter a valid name.');
-            return;
-        }
-
-        try {
-            // Send POST request to the server to add the user
-            const response = await fetch('/user/add/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ name: userName }),
-            });
-
-            if (response.ok) {
-                // Reload the page to refresh the user list
-                location.reload();
-            } else {
-                alert('Failed to add user');
+        // Handle Enter key for Add User
+        document.getElementById('new-user-name').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                document.getElementById('add-user-btn').click();
             }
-        } catch (error) {
-            console.error('Error adding user:', error);
-            alert('An error occurred while adding the user.');
-        }
-    });
+        });
 
-    // Handle Enter key press in the text field to trigger Add User functionality
-    document.getElementById('new-user-name').addEventListener('keydown', function (e) {
-        if (e.key === 'Enter') {
-            e.preventDefault();  // Prevent the default action of the Enter key
-            document.getElementById('add-user-btn').click();  // Trigger the button click
-        }
+        document.addEventListener('keydown', async (e) => {
+            const userList = document.querySelectorAll('.list-group-item');
+            let selectedUser = localStorage.getItem('selectedUser');
+            if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+
+                if (userList.length === 0) return;
+
+                selectedUser = selectedUser === null ? null : Number(selectedUser);
+
+                // Remove 'active' from the currently selected user
+                if (selectedUser !== null && userList[selectedUser]) {
+                    userList[selectedUser].classList.remove('active');
+                }
+
+                if (e.key === 'ArrowUp') {
+                    selectedUser = (selectedUser === null || selectedUser === 0) ? userList.length - 1 : selectedUser - 1;
+                } else {
+                    selectedUser = (selectedUser === null || selectedUser === userList.length - 1) ? 0 : selectedUser + 1;
+                }
+                
+                userList[selectedUser].classList.add('active');
+                localStorage.setItem('selectedUser', selectedUser);
+                let selectedUserId = userList[selectedUser].getAttribute('user-id');
+                localStorage.setItem('selectedUserId', selectedUserId);
+                await fetch(`/user/set-user/${selectedUserId}`, { method: 'POST' });
+            }
+            else if (e.key == 'Delete') {
+                const selectedItem = userList[selectedUser];
+                const deleteIcon = selectedItem.querySelector('.delete-icon');
+                
+                if (deleteIcon) {
+                    // Trigger a click event on the delete icon to delete the user
+                    deleteIcon.click();
+                }
+            }
+        });
     });
 </script>

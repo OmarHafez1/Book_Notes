@@ -1,0 +1,202 @@
+<div class="container py-5">
+    <!-- Add book Form -->
+    <div class="d-flex align-items-center mt-2 mb-5" style="max-width: 500px; margin: 0 auto;">
+        <input type="text" id="add-book-name" class="form-control me-2" placeholder="Enter the name of the book"
+            style="flex: 1;" />
+        <button id="add-book-search-btn" class="btn btn-primary" style="flex-shrink: 0;">Search</button>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div id="add-book-loading-spinner" class="loading-icon-container" style="display: none; text-align: center;">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+
+    <div class="add-book-results" id="add-book-results"></div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="AddBookModal" tabindex="-1" role="dialog" aria-labelledby="AddBookModalTitle" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="AddBookModalTitle">Modal title</h2>
+            </div>
+            <div class="modal-body">
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary add-book-btn">Add book</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const addBookResultsContainer = document.getElementById('add-book-results');
+    let addBookCache = []; // Cache to store fetched books
+    let addBookIndex = -1;
+
+    document.getElementById('add-book-search-btn').addEventListener('click', async () => {
+        const query = document.getElementById('add-book-name').value.trim();
+
+        if (!query) {
+            alert('Please enter a search query!');
+            return;
+        }
+
+        document.getElementById('add-book-loading-spinner').style.display = 'block';
+        addBookResultsContainer.innerHTML = '';
+        addBookCache = []; // Clear cache on new search
+
+        try {
+            const response = await fetch(`/book/search?q=${encodeURIComponent(query)}`);
+
+            if (!response.ok) {
+                throw new Error(`Error: ${response.status} ${response.statusText}`);
+            }
+
+            const result = await response.json();
+            const books = result.data || [];
+
+            document.getElementById('add-book-loading-spinner').style.display = 'none';
+
+            if (books.length === 0) {
+                alert('No books found for the given query.');
+                return;
+            }
+
+            addBookCache = books; // Cache books for later use
+
+            for (let i = 0; i < books.length; i++) {
+                const book = books[i];
+                const bookCard = `
+                <button class="add-book" data-index="${i}" data-toggle="modal" data-target="#AddBookModal">
+                    ${book.cover_id == null || book.cover_id == -1
+                        ? `<%- include('../partials/no_cover.ejs') %> `
+                        : `<img src="https://covers.openlibrary.org/b/id/${book.cover_id}-L.jpg" alt="Book Cover" />`
+                    }
+                    <div class="details">
+                        <h3>${book.title}</h3>
+                    </div>
+                </button>
+                `;
+                addBookResultsContainer.insertAdjacentHTML('beforeend', bookCard);
+            }
+
+        } catch (error) {
+            document.getElementById('add-book-loading-spinner').style.display = 'none';
+            console.error('Error fetching books:', error);
+            alert('An error occurred while fetching books. Please try again later.');
+        }
+    });
+
+    // Event delegation for book buttons
+    addBookResultsContainer.addEventListener('click', (e) => {
+        const bookBtn = e.target.closest('.add-book');
+        if (!bookBtn) return;
+
+        addBookIndex = bookBtn.getAttribute('data-index');
+        const book = addBookCache[addBookIndex];
+
+        if (book) {
+            document.getElementById('AddBookModalTitle').textContent = book.title;
+            const modalBody = document.querySelector('.modal-body');
+            modalBody.innerHTML = `
+                <div class="modal-content-container">
+                    <div class="modal-book-cover">
+                        ${book.cover_id && book.cover_id != -1
+                    ? `<img src="https://covers.openlibrary.org/b/id/${book.cover_id}-L.jpg" alt="Book Cover" class="img-fluid">`
+                    : `<div class="modal-no-cover">No Cover Available</div>`
+                }
+                    </div>
+                    <div class="modal-book-details">
+                        <div class="mb-3">
+                            <label for="note" class="form-label">Add a Note:</label>
+                            <textarea id="note" class="form-control" rows="8"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="read-date" class="form-label">Read Date:</label>
+                            <input type="date" id="read-date" class="form-control">
+                        </div>
+                        <div class="mb-3">
+                            <label for="rate" class="form-label">Rate (e.g., 4.8):</label>
+                            <input type="number" id="rate" class="form-control" step="0.1" min="0" max="5" placeholder="Enter a rating between 0 and 5">
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+    });
+
+    document.querySelector('.add-book-btn').addEventListener('click', async () => {
+        const note = document.getElementById('note').value.trim();
+        const readDate = document.getElementById('read-date').value;
+        const rate = parseFloat(document.getElementById('rate').value);
+
+        // Validate inputs
+        if (!note || !readDate || isNaN(rate) || rate < 0 || rate > 5) {
+            alert('Please provide valid input. Note cannot be empty, rate must be between 0 and 5.');
+            return;
+        }
+
+        const bookKey = addBookCache[addBookIndex].book_key;
+        let selectedUserId = localStorage.getItem('selectedUserId');
+
+        if (!bookKey || !selectedUserId) {
+            alert('Book key and user ID are required');
+            return;
+        }
+
+        // Prepare data to send
+        const bookData = {
+            user_id: selectedUserId,
+            book_key: bookKey,
+            rating: rate,
+            note,
+            read_date: readDate,
+        };
+
+        try {
+            // Send data to backend
+            const response = await fetch('/book/add', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(bookData),
+            });
+
+            // Check response
+            if (!response.ok) {
+                throw new Error(`Error: ${response.status} ${response.statusText}`);
+            }
+
+            const result = await response.json();
+            alert('Book added successfully!');
+
+            // Close modal (if required)
+            $('#AddBookModal').modal('hide');
+
+        } catch (error) {
+            console.error('Error adding book:', error);
+            alert('An error occurred while adding the book. Please try again.');
+        }
+    });
+
+
+    document.getElementById('add-book-name').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            document.getElementById('add-book-search-btn').click();
+        }
+    });
+</script>
+
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.4.4/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+

@@ -1,5 +1,21 @@
 <%- include('partials/header.ejs') %>
 
-<%- include('partials/books_list.ejs') %>
+<%- include('partials/books_list.ejs', {books: books}) %>
 
 <%- include('partials/footer.ejs') %>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const selectedUserId = localStorage.getItem("selectedUserId");
+    if (selectedUserId) {
+      fetch(`/user/set-user/${selectedUserId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      }).then((res) => {
+        if (!res.ok) {
+          console.error("Failed to synchronize selected user with server.");
+        }
+      });
+    }
+  });
+</script>
