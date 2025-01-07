@@ -43,10 +43,14 @@ router.get("/details/*", async (req, res) => {
 
 // Add Book and User Book Relationship
 router.post("/add", async (req, res) => {
-    const { book_key, user_id, rating, note, read_date } = req.body;
+    let { book_key, user_id, rating, note, read_date } = req.body;
 
     if (!book_key || !user_id) {
         return res.status(400).json({ success: false, error: "Book key and user ID are required" });
+    }
+
+    if (book_key && book_key.startsWith('/')) {
+        book_key = book_key.substring(1); 
     }
 
     try {
@@ -70,7 +74,7 @@ router.post("/add", async (req, res) => {
         }
 
         await db.query(
-            "INSERT INTO user_book (user_id, book_key, rating, note, read_date) VALUES ($1, $2, $3, $4, TO_DATE($5, 'DD/MM/YYYY'))",
+            "INSERT INTO user_book (user_id, book_key, rating, note, read_date) VALUES ($1, $2, $3, $4, TO_DATE($5, 'YYYY/MM/DD'))",
             [user_id, book_key, rating, note, read_date]
         );
 
