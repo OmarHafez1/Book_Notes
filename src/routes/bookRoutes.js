@@ -41,16 +41,11 @@ router.get("/details/*", async (req, res) => {
     }
 });
 
-// Add Book and User Book Relationship
 router.post("/add", async (req, res) => {
-    let { book_key, user_id, rating, note, read_date } = req.body;
+    const { book_key, user_id, rating, note, read_date } = req.body;
 
     if (!book_key || !user_id) {
         return res.status(400).json({ success: false, error: "Book key and user ID are required" });
-    }
-
-    if (book_key && book_key.startsWith('/')) {
-        book_key = book_key.substring(1); 
     }
 
     try {
@@ -85,6 +80,42 @@ router.post("/add", async (req, res) => {
     }
 });
 
+router.post("/edit", async (req, res) => {
+    const { book_key, user_id, rating, note, read_date } = req.body;
+
+    if (!book_key || !user_id) {
+        return res.status(400).json({ success: false, error: "Book key and user ID are required" });
+    }
+
+    try {
+        await db.query(
+            "UPDATE user_book SET rating = $1, note = $2, read_date = TO_DATE($3, 'YYYY/MM/DD') WHERE user_id = $4 AND book_key = $5",
+            [rating, note, read_date, user_id, book_key]
+        );
+
+        res.status(200).json({ success: true, message: "Book updated successfully" });
+    } catch (err) {
+        console.log(err);
+        res.status(500).json({ success: false, error: "Failed to update book" });
+    }
+})
+
+router.post("/delete", async (req, res) => {
+    const { book_key, user_id } = req.body;
+
+    if (!book_key || !user_id) {
+        return res.status(400).json({ success: false, error: "Book key and user ID are required" });
+    }
+
+    try {
+        await db.query("DELETE FROM user_book WHERE user_id = $1 AND book_key = $2", [user_id, book_key]);
+        res.status(200).json({ success: true, message: "Book deleted successfully" });
+    } catch (err) {
+        console.log(err);
+        res.status(500).json({ success: false, error: "Failed to delete book" });
+    }
+});
+
 router.get("/search", async (req, res) => {
     const query = req.query.q;
     if (!query) return res.status(400).json({ success: false, error: "Query parameter is required" });
@@ -94,7 +125,7 @@ router.get("/search", async (req, res) => {
         const data = response.data;
 
         const results = data.docs.map((book) => ({
-            book_key: book.key,
+            book_key: book.key.replace(/^\/+/g, ''),
             title: book.title,
             authors: book.author_name,
             cover_id: book.cover_i || null,
@@ -108,3 +139,4 @@ router.get("/search", async (req, res) => {
 });
 
 export default router;
+
