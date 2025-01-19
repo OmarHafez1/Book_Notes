@@ -11,7 +11,7 @@ const localUrl = process.env.LOCAL_URL || `http://localhost:${process.env.PORT |
   router.get("/", async (req, res) => {
     const selectedUserId = parseInt(req.session.selectedUserId);
 
-    if (!selectedUserId) {
+    if (!selectedUserId || selectedUserId === -1) {
       return res.redirect("/users");
     }
 
@@ -46,7 +46,7 @@ router.get("/books", async (req, res) => {
   const selectedUserId = parseInt(req.session.selectedUserId);
   
   try {
-    if(!selectedUserId) {
+    if(!selectedUserId || selectedUserId === -1) {
       return res.redirect("/users");
     }
     res.render("books.ejs");

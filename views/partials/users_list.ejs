@@ -63,7 +63,7 @@
                     if (response.ok && result.success) {
                         item.remove();
                         if (userList[selectedUser].getAttribute('user-id') === userId) {
-                            updateSelectedUser(selectedUser);
+                            updateSelectedUser(null);
                         }
                     } else {
                         alert(result.error || 'Failed to delete user');
@@ -130,7 +130,7 @@
 
                 // Remove 'active' from the currently selected user
                 if (selectedUser !== null && userList[selectedUser]) {
-                    userList[selectedUser].classList.remove('active');
+                    userList[selectedUser].classList.remove('selected-user');
                 }
 
                 if (e.key === 'ArrowUp') {
@@ -139,7 +139,7 @@
                     selectedUser = (selectedUser === null || selectedUser === userList.length - 1) ? 0 : selectedUser + 1;
                 }
                 
-                userList[selectedUser].classList.add('active');
+                userList[selectedUser].classList.add('selected-user');
                 localStorage.setItem('selectedUser', selectedUser);
                 let selectedUserId = userList[selectedUser].getAttribute('user-id');
                 localStorage.setItem('selectedUserId', selectedUserId);
