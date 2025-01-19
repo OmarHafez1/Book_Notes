@@ -3,11 +3,15 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    /* Ensure no element exceeds the viewport */
+    overflow-x: hidden;
 }
 
 body {
     background-color: #ececec;
     font-family: Arial, sans-serif;
+    overflow-x: hidden;
+    height: 100vh;
 }
 
 /* Text Styling */
@@ -23,104 +27,100 @@ span {
 }
 
 /* Header Styling */
-.header,
-.header .nav-item {
+.header {
     background-color: #6E2CF3;
-    color: white;
 }
 
 .header {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 20px;
-    height: 80px;
+    font-size: clamp(18px, 1vw, 20px);
+    height: 8vh;
+    width: 100%;
 }
 
-/* Make nav items white */
-.nav-link {
-    color: white !important;
-    font-weight: 400;
+a.nav-link {
+    color: white;
+    text-decoration-color: white;
 }
 
-/* Active link styling */
-.nav-link.active {
-    font-weight: 910;
-    color: white !important;
+a.nav-link:hover {
+    color: white;
+    font-weight: bolder;
+    text-decoration-color: white;
 }
 
+a.nav-link.active {
+    color: white;
+    font-weight: bolder;
+    text-decoration-color: white;
+}
 
 /* Button Styling */
-button, .btn {
-    background-color: #6E2CF3; /* Match header color */
-    color: white; /* Ensure text is white */
-    border: none; /* Remove default border */
-    padding: 10px 20px; /* Add some padding */
+button,
+.btn {
+    background-color: #6E2CF3;
+    color: white;
+    border: none;
+    padding: 10px 20px;
     font-size: 16px;
-    border-radius: 5px; /* Slightly rounded corners */
-    cursor: pointer; /* Add pointer on hover */
-    transition: background-color 0.3s ease; /* Smooth transition */
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
 }
 
-button:hover, .btn:hover {
-    background-color: #5622C3; /* Darken the button on hover */
+button:hover,
+.btn:hover {
+    background-color: #5622C3;
 }
 
-button:active, .btn:active {
-    background-color: #4A1DA3; /* Even darker when pressed */
-    outline: none;
-}
-
-button:focus, .btn:focus {
-    outline: none; /* Remove focus outline */
-    box-shadow: 0 0 5px rgba(110, 44, 243, 0.8); /* Optional glow effect */
+button:active,
+.btn:active {
+    background-color: #4A1DA3;
 }
 
 /* Selected User Styling */
 .selected-user {
-    background-color: #6E2CF3; /* Match header and button color */
-    color: white; /* Ensure text is readable */
-    border-radius: 5px; /* Add rounded corners to match button style */
-    padding: 10px 20px; /* Add padding for better appearance */
-    font-size: 16px; /* Consistent font size */
-    transition: background-color 0.3s ease; /* Smooth hover effect */
-}
-
-.user:hover {
-    background-color: #ddd;
-}
-
-.selected-user:hover{
-    background-color: #5622C3; /* Darken the color on hover */
-}
-
-.selected-user:active {
-    background-color: #4A1DA3; /* Even darker when active */
+    background-color: #6E2CF3;
+    color: white;
+    border-radius: 5px;
+    padding: 10px 20px;
+    font-size: 16px;
 }
 
 /* Layout for Books */
-.add-book-results, .books {
+.add-book-results,
+.books {
     display: grid;
-    gap: 44px;
-    margin: 5% 7%;
+    gap: 35px;
+    width: 100%;
+    padding-top: 40px;
+    margin-bottom: 50px;
     justify-content: center;
-    align-items: stretch;
+    align-items: space-evenly;
 }
 
 .add-book-results {
-    grid-template-columns: repeat(auto-fit, minmax(300px, 700px));
+    margin-left: 15px;
+    margin-right: 15px;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 400px));
 }
 
 .books {
-    grid-template-columns: repeat(auto-fit, minmax(300px, 500px));
+    grid-template-columns: repeat(auto-fit, minmax(250px, 550px));
+    overflow: visible;
 }
 
 /* Book Card Styling */
-.book, .add-book {
+.book,
+.add-book {
     background-color: #fff;
     border-radius: 10px;
     box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.2);
     transition: transform 0.2s, box-shadow 0.2s;
+    width: 100%;
+    height: auto;
 }
 
 .book {
@@ -139,30 +139,39 @@ button:focus, .btn:focus {
     border: 1px solid #ddd;
 }
 
-.book:hover, .add-book:hover {
+.book:hover,
+.add-book:hover {
     transform: scale(1.05);
     box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3);
+    cursor: pointer;
 }
 
 /* Image Styling */
-.add-book img, .book img {
+.add-book img,
+.book img {
     width: 100%;
+    height: 100%;
     object-position: center;
 }
 
-.add-book img, .add-book .no-cover {
+.add-book img,
+.add-book .no-cover {
     height: 85%;
 }
 
 .book img {
+    width: 100%;
+    height: auto;
+    width: 100%;
     height: 100%;
+    background-size: contain;
     object-fit: cover;
     border-radius: 10px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 /* Book Title Styling */
-.add-book h3, .book h3 {
+.add-book h3,
+.book h3 {
     font-size: clamp(20px, 1.5vw, 28px);
     font-weight: 500;
     line-height: 1.2em;
@@ -186,8 +195,7 @@ button:focus, .btn:focus {
 }
 
 .book .details {
-    padding: 10px;
-    padding-left: 0;
+    padding-top: 20px;
 }
 
 /* No Cover Placeholder */
@@ -212,9 +220,52 @@ button:focus, .btn:focus {
 }
 
 /* Modal Design */
+
 .modal-dialog {
-    max-width: 50%;
+    max-width: auto;
     margin: auto;
+}
+
+.modal-dialog .modal-content .modal-header {
+    background-color: #6E2CF3;
+    color: white;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    /* Align items to the top */
+    padding-right: 10px;
+    /* Extra padding for spacing */
+}
+
+.modal-header .title-container {
+    flex-grow: 1;
+    /* Allow the title to take up available space */
+    margin-right: 10px;
+    /* Space between title and icon */
+}
+
+.modal-header .modal-title {
+    margin: 0;
+    /* Reset unwanted margins */
+    white-space: normal;
+    /* Allow wrapping */
+    word-wrap: break-word;
+    /* Break long words if needed */
+    font-size: 1.5rem;
+    /* Adjust title size if necessary */
+}
+
+.modal-header .delete-icon {
+    cursor: pointer;
+    padding: 5px;
+}
+
+.modal-header .delete-icon:hover {
+    color: #dc3545;
+    /* Highlight color on hover */
 }
 
 .modal-content-container {
@@ -230,8 +281,8 @@ button:focus, .btn:focus {
 }
 
 .modal-book-cover img {
-    width: auto;
-    height: 70vh;
+    width: 100%; /* Increase this percentage to make the image wider */
+    height: auto; /* Maintain aspect ratio */
     object-fit: cover;
     border-radius: 10px;
 }
@@ -258,10 +309,12 @@ button:focus, .btn:focus {
 @media (max-width: 768px) {
     .books {
         grid-template-columns: 1fr;
+        /* Ensure only one item per row */
     }
 
     .modal-dialog {
         max-width: 95%;
+        /* Ensure modal fits on smaller screens */
     }
 
     .modal-content-container {
@@ -269,7 +322,34 @@ button:focus, .btn:focus {
         align-items: center;
     }
 
-    .modal-book-cover, .modal-book-details {
+    .modal-book-cover,
+    .modal-book-details {
         width: 100%;
+    }
+
+    /* Avoid horizontal scrolling by preventing overflow */
+    body,
+    html {
+        width: 100%;
+        overflow-x: hidden;
+    }
+
+    .add-book-results,
+    .books {
+        width: 100%;
+        /* Ensure full-width layout */
+        padding-left: 10px;
+        padding-right: 10px;
+        /* Avoid overflow due to margins */
+    }
+
+    .book {
+        width: 100%;
+    }
+
+    .no-cover {
+        width: 100%;
+        height: 150px;
+        /* Adjust no-cover height to fit better */
     }
 }

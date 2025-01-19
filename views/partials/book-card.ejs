@@ -1,19 +1,169 @@
-<div class="book">
-    <% if (book.cover_id == null || book.cover_id == -1) { %>
-      <%- include('../partials/no_cover.ejs') %>
-    <% } else {%> 
-      <img src= <%= `https://covers.openlibrary.org/b/id/${book.cover_id}-L.jpg` %> alt="Description of the image" />
-    <% } %>
-    <div class="details">
-        <h3><%= book.title %></h3>
-      <p>Read date: <span><%= book.read_date %> </span></p>
-      <p>Authors:</p>
-      <ul class="authors">
-        <% book.authors.forEach(author => { %>
-          <li><%= author %></li>
-        <% }) %>
-      </ul>
-      <p>Rating: <span><%= book.rating %>/5</span></p>
-      <p> Note: <span><%= book.note %></span></p>
+<!-- Bootstrap CSS -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<!-- Bootstrap JS Bundle (with Popper.js) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<div class="book" onclick="openBookModal(<%= JSON.stringify(book) %>)">
+    <% if (!book.cover_id || book.cover_id===-1) { %>
+        <%- include('../partials/no_cover.ejs') %>
+            <% } else { %>
+                <img src="https://covers.openlibrary.org/b/id/<%= book.cover_id %>-L.jpg" alt="<%= book.title %>"
+                    class="img-fluid" />
+                <% } %>
+                    <div class="details">
+                        <h3>
+                            <%= book.title %>
+                        </h3>
+                        <p>Read date: <time datetime="<%= book.read_date %>">
+                                <%= book.read_date %>
+                            </time></p>
+                        <p>Authors:</p>
+                        <ul class="authors">
+                            <% book.authors.slice(0, 3).forEach(author=> { %>
+                                <li>
+                                    <%= author %>
+                                </li>
+                                <% }) %>
+                        </ul>
+                        <p>Rating: <span aria-label="Rating: <%= book.rating %> out of 5">
+                                <%= book.rating %>/5
+                            </span></p>
+                        <p>Note: <span class="text-truncate">
+                                <%= book.note %>
+                            </span></p>
+                    </div>
+</div>
+
+<div class="modal fade" id="BookModal" tabindex="-1" aria-labelledby="BookModalLabel" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="BookModalTitle">Modal title</h2>
+                <i class="bi bi-trash text-danger fs-4 delete-icon" onclick="deleteBook(event)" title="Delete Book"></i>
+            </div>
+            <div class="modal-body" id="modal-body">
+                <!-- Dynamic content will be inserted here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary save-btn" onclick="saveEdit(event)">Save</button>
+            </div>
+        </div>
     </div>
-  </div>
+</div>
+
+<script>
+    function deleteBook(event) {
+        const modal = document.getElementById('BookModal');
+        const bookKey = modal.dataset.bookKey;
+
+        if (!bookKey) {
+            console.error("Book key is missing.");
+            return;
+        }
+
+        event.stopPropagation();
+
+        if (confirm("Are you sure you want to delete this book?")) {
+            fetch('/book/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    book_key: bookKey,
+                    user_id: localStorage.getItem('selectedUserId')
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert("Failed to delete the book.");
+                    }
+                })
+                .catch(err => console.error("Error deleting book:", err));
+        }
+    }
+
+    function saveEdit(event) {
+        const modal = document.getElementById('BookModal');
+        const bookKey = modal.dataset.bookKey;
+
+        if (!bookKey) {
+            console.error("Book key is missing.");
+            return;
+        }
+
+        event.stopPropagation();
+
+        const note = document.getElementById('note').value.trim();
+        const readDate = document.getElementById('read-date').value;
+        const rate = parseFloat(document.getElementById('rate').value);
+
+        if (!note || !readDate || isNaN(rate) || rate < 0 || rate > 5) {
+            alert('Please provide valid input. Note cannot be empty, rate must be between 0 and 5.');
+            return;
+        }
+
+        fetch('/book/edit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                book_key: bookKey,
+                user_id: localStorage.getItem('selectedUserId'),
+                rating: rate,
+                note,
+                read_date: readDate
+            })
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Failed to update book');
+                }
+            })
+            .catch(err => console.error(err));
+    }
+
+    function openBookModal(book) {
+        const modalTitle = document.getElementById('BookModalTitle');
+        const modalBody = document.getElementById('modal-body');
+        const modal = document.getElementById('BookModal');
+
+        modalTitle.textContent = book.title;
+
+        modalBody.innerHTML = `
+            <div class="modal-content-container">
+                <div class="modal-book-cover">
+                    ${!book.cover_id || book.cover_id === -1
+                ? `<div class="modal-no-cover">No Cover Available</div>`
+                : `<img src="https://covers.openlibrary.org/b/id/${book.cover_id}-L.jpg" alt="${book.title}" class="img-fluid">`
+            }
+                </div>
+                <div class="modal-book-details">
+                    <div class="mb-3">
+                        <label for="note" class="form-label">Add a Note:</label>
+                        <textarea id="note" class="form-control" rows="8">${book.note || ''}</textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="read-date" class="form-label">Read Date:</label>
+                        <input type="date" id="read-date" class="form-control" value="${book.read_date || ''}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="rate" class="form-label">Rate (e.g., 4.8):</label>
+                        <input type="number" id="rate" class="form-control" step="0.1" min="0" max="5" value="${book.rating || ''}" placeholder="Enter a rating between 0 and 5">
+                    </div>
+                </div>
+            </div>
+        `;
+
+        modal.dataset.book = JSON.stringify(book);
+        modal.dataset.bookKey = book.book_key;
+
+        const bootstrapModal = new bootstrap.Modal(modal);
+        bootstrapModal.show();
+    }
+</script>
