@@ -61,7 +61,8 @@ router.get("/books", async (req, res) => {
               ARRAY(SELECT a.name FROM authors a WHERE a.book_key = b.key) AS authors 
        FROM user_book ub 
        JOIN books b ON ub.book_key = b.key 
-       WHERE ub.user_id = $1`,
+       WHERE ub.user_id = $1
+       ORDER BY b.title ASC`,
       [user_id]
     );
     res.status(200).json(result.rows);
